@@ -1,5 +1,7 @@
 # Student Performance Prediction System
 
+# Student Performance Prediction System
+
 A beginner-friendly ML project to predict student performance and visualize key trends. Later, this project will be containerized (virtualization) and deployed on cloud (multi-cloud).
 
 ## Goals
@@ -7,7 +9,10 @@ A beginner-friendly ML project to predict student performance and visualize key 
 - Train classic ML models (baseline → improved)
 - Evaluate using metrics (MAE/RMSE or Accuracy/F1)
 - Visualize insights (charts + dashboard)
+# Student Performance Prediction System
+
 - Deploy using Docker + cloud VM/service
+
 
 ## Tech Stack
 Python, Pandas, NumPy, Scikit-learn, Matplotlib (later: Streamlit, Docker, Cloud)
@@ -29,12 +34,4 @@ Python, Pandas, NumPy, Scikit-learn, Matplotlib (later: Streamlit, Docker, Cloud
 ```bash
 python3 src/baseline.py
 
-
-In nano: **Ctrl + O → Enter → Ctrl + X**.
-
-Then run:
-```bash
-git add README.md
-git commit -m "week-1: add README"
-git push
 
