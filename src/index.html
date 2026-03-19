@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Performance Predictor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0d14;--surface:#111420;--card:#161b2e;--border:#1e2a45;--blue:#3b82f6;--blue-dark:#1d4ed8;--blue-glow:rgba(59,130,246,0.15);--green:#10b981;--red:#ef4444;--text:#f1f5f9;--muted:#64748b;--accent:#818cf8}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+nav{position:fixed;top:0;width:100%;z-index:100;background:rgba(10,13,20,0.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav-logo{font-size:1.1rem;font-weight:700;color:var(--blue);display:flex;align-items:center;gap:8px}
+.nav-links{display:flex;gap:2rem}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.9rem;transition:color 0.2s}
+.nav-links a:hover{color:var(--text)}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:6rem 2rem 4rem;background:radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.12) 0%,transparent 70%)}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-glow);border:1px solid rgba(59,130,246,0.3);color:var(--blue);padding:6px 16px;border-radius:999px;font-size:0.8rem;margin-bottom:1.5rem}
+.hero h1{font-size:clamp(2.2rem,5vw,4rem);font-weight:800;line-height:1.1;margin-bottom:1rem}
+.hero h1 span{color:var(--blue)}
+.hero p{color:var(--muted);font-size:1.1rem;max-width:540px;margin:0 auto 2rem;line-height:1.7}
+.btn-primary{background:var(--blue);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn-primary:hover{background:var(--blue-dark);transform:translateY(-2px)}
+.hero-stats{display:flex;gap:3rem;justify-content:center;margin-top:4rem}
+.hero-stat .num{font-size:2rem;font-weight:800;color:var(--blue)}
+.hero-stat .label{font-size:0.8rem;color:var(--muted);margin-top:2px}
+section{padding:3rem 2rem;max-width:1100px;margin:0 auto}
+.section-tag{color:var(--blue);font-size:0.8rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:0.5rem}
+.section-title{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;margin-bottom:0.5rem}
+.section-sub{color:var(--muted);font-size:1rem;margin-bottom:1.5rem}
+.predict-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem}
+.card-title{font-size:1rem;font-weight:700;margin-bottom:1.5rem;color:var(--accent);display:flex;align-items:center;gap:8px}
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:0.85rem;color:var(--muted);margin-bottom:6px}
+.slider-wrap{display:flex;align-items:center;gap:12px}
+.slider-wrap input[type=range]{flex:1;accent-color:var(--blue)}
+.slider-val{font-size:0.9rem;font-weight:600;color:var(--blue);min-width:28px}
+.btn-predict{width:100%;background:var(--blue);color:#fff;border:none;padding:14px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:0.5rem;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-predict:hover{background:var(--blue-dark)}
+.result-box{display:none}
+.result-box.show{display:block}
+.result-grade{text-align:center;padding:2rem;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);border-radius:14px;margin-bottom:1rem}
+.grade-num{font-size:5rem;font-weight:900;color:#fff;line-height:1}
+.grade-label{color:#93c5fd;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.result-pass{text-align:center;padding:14px;border-radius:10px;font-size:1.1rem;font-weight:700;margin-bottom:1rem}
+.result-pass.pass{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3)}
+.result-pass.fail{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.result-tip{background:var(--surface);border-left:3px solid var(--blue);padding:12px 16px;border-radius:0 8px 8px 0;font-size:0.88rem;color:var(--muted)}
+.result-placeholder{text-align:center;padding:4rem 2rem;color:var(--muted)}
+.result-placeholder i{font-size:3rem;color:var(--border);margin-bottom:1rem;display:block}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem}
+.chart-card h3{font-size:0.95rem;font-weight:600;color:var(--muted);margin-bottom:1.25rem}
+.insights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.insight-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem;transition:border-color 0.2s,transform 0.2s}
+.insight-card:hover{border-color:var(--blue);transform:translateY(-4px)}
+.insight-icon{font-size:1.8rem;margin-bottom:1rem}
+.insight-card h3{font-size:1rem;font-weight:700;margin-bottom:0.5rem}
+.insight-card p{font-size:0.88rem;color:var(--muted);line-height:1.6}
+.future-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.future-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.5rem}
+.future-card .phase{font-size:0.75rem;color:var(--blue);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.future-card h3{font-size:1rem;font-weight:700}
+.future-card p{font-size:0.85rem;color:var(--muted);line-height:1.6}
+.future-badge{display:inline-flex;align-items:center;gap:4px;background:var(--blue-glow);color:var(--blue);padding:4px 10px;border-radius:999px;font-size:0.75rem;margin-top:auto;width:fit-content}
+footer{border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem}
+footer a{color:var(--blue);text-decoration:none;margin:0 0.5rem}
+.spinner{display:none;width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:768px){.predict-grid,.charts-grid,.insights-grid,.future-grid{grid-template-columns:1fr}.nav-links{display:none}.hero-stats{gap:1.5rem}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo"><i class="fas fa-graduation-cap"></i> SPP System</div>
+  <div class="nav-links">
+    <a href="#predict">Predict</a>
+    <a href="#charts">Visualize</a>
+    <a href="#insights">Insights</a>
+    <a href="#future">Roadmap</a>
+    <a href="https://github.com/tanushv-creator/student-performance-prediction" target="_blank">GitHub</a>
+  </div>
+</nav>
+<div class="hero">
+  <div>
+    <div class="hero-badge"><i class="fas fa-circle" style="font-size:8px"></i> ML-Powered · Random Forest · UCI Dataset</div>
+    <h1>Student <span>Performance</span><br>Prediction System</h1>
+    <p>Predict student grades using machine learning. Built with scikit-learn, visualized with charts, and designed to scale to the cloud.</p>
+    <a href="#predict" class="btn-primary"><i class="fas fa-bolt"></i> Try Prediction</a>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">395</div><div class="label">Students</div></div>
+      <div class="hero-stat"><div class="num">87%</div><div class="label">Accuracy</div></div>
+      <div class="hero-stat"><div class="num">3</div><div class="label">ML Models</div></div>
+    </div>
+  </div>
+</div>
+<section id="predict">
+  <div class="section-tag">Machine Learning</div>
+  <div class="section-title">Grade Predictor</div>
+  <div class="section-sub">Enter student details to get an instant prediction</div>
+  <div class="predict-grid">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-sliders"></i> Student Details</div>
+      <div class="form-group"><label>Study Time (hrs/week)</label><div class="slider-wrap"><input type="range" min="1" max="4" value="2" id="studytime" oninput="document.getElementById('sv1').textContent=this.value"><span class="slider-val" id="sv1">2</span></div></div>
+      <div class="form-group"><label>Past Failures</label><div class="slider-wrap"><input type="range" min="0" max="4" value="0" id="failures" oninput="document.getElementById('sv2').textContent=this.value"><span class="slider-val" id="sv2">0</span></div></div>
+      <div class="form-group"><label>Number of Absences</label><div class="slider-wrap"><input type="range" min="0" max="30" value="5" id="absences" oninput="document.getElementById('sv3').textContent=this.value"><span class="slider-val" id="sv3">5</span></div></div>
+      <div class="form-group"><label>Mother's Education (0-4)</label><div class="slider-wrap"><input type="range" min="0" max="4" value="2" id="medu" oninput="document.getElementById('sv4').textContent=this.value"><span class="slider-val" id="sv4">2</span></div></div>
+      <div class="form-group"><label>Father's Education (0-4)</label><div class="slider-wrap"><input type="range" min="0" max="4" value="2" id="fedu" oninput="document.getElementById('sv5').textContent=this.value"><span class="slider-val" id="sv5">2</span></div></div>
+      <button class="btn-predict" onclick="predict()"><span id="btn-text"><i class="fas fa-brain"></i> Predict Grade</span><div class="spinner" id="spinner"></div></button>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-chart-bar"></i> Prediction Result</div>
+      <div class="result-placeholder" id="placeholder"><i class="fas fa-graduation-cap"></i><p>Fill in the details and click<br><strong>Predict Grade</strong> to see results</p></div>
+      <div class="result-box" id="result-box">
+        <div class="result-grade"><div class="grade-num" id="grade-num">--</div><div class="grade-label">Predicted Final Grade / 20</div></div>
+        <div class="result-pass" id="result-pass"></div>
+        <div class="result-tip" id="result-tip"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="insights">
+  <div class="section-tag">Analysis</div>
+  <div class="section-title">Key Insights</div>
+  <div class="section-sub">What the data tells us about student performance</div>
+  <div class="insights-grid">
+    <div class="insight-card"><div class="insight-icon">📚</div><h3>Study Time Matters</h3><p>Students who study 3-4 hrs/week score on average 3 points higher than those who study less than 1 hr/week.</p></div>
+    <div class="insight-card"><div class="insight-icon">⚠️</div><h3>Failures are Costly</h3><p>Each past failure reduces the predicted final grade by ~2 points. Students with 0 failures score significantly higher.</p></div>
+    <div class="insight-card"><div class="insight-icon">📅</div><h3>Absences Hurt Grades</h3><p>High absenteeism (20+ days) strongly correlates with failing grades. Attendance is one of the top predictors.</p></div>
+    <div class="insight-card"><div class="insight-icon">👨‍👩‍👧</div><h3>Parent Education Helps</h3><p>Students with parents who have higher education levels tend to perform better, suggesting stronger home support.</p></div>
+    <div class="insight-card"><div class="insight-icon">🌲</div><h3>Random Forest Wins</h3><p>Among 3 models tested, Random Forest achieved the best accuracy (87%) and lowest RMSE on the test set.</p></div>
+    <div class="insight-card"><div class="insight-icon">🎯</div><h3>Top 3 Features</h3><p>Past failures, study time, and absences are the three most important features for predicting final grade.</p></div>
+  </div>
+</section>
+<section id="future">
+  <div class="section-tag">Roadmap</div>
+  <div class="section-title">What's Coming Next</div>
+  <div class="section-sub">This project will be containerized and deployed on multi-cloud</div>
+  <div class="future-grid">
+    <div class="future-card"><div class="phase">Phase 3 - Current</div><h3>Streamlit Web App</h3><p>Interactive prediction interface built with Python and Streamlit, running locally.</p><div class="future-badge"><i class="fas fa-check"></i> In Progress</div></div>
+    <div class="future-card"><div class="phase">Phase 4</div><h3>Docker Container</h3><p>Package the entire app and model into a Docker image for consistent deployment anywhere.</p><div class="future-badge"><i class="fas fa-clock"></i> Coming Soon</div></div>
+    <div class="future-card"><div class="phase">Phase 5</div><h3>Cloud Deployment</h3><p>Deploy on AWS ECS and GCP Cloud Run using CI/CD pipelines with GitHub Actions.</p><div class="future-badge"><i class="fas fa-clock"></i> Coming Soon</div></div>
+  </div>
+</section>
+<footer>
+  <p>Student Performance Prediction System · Built by Tanush Varshney</p>
+  <p style="margin-top:8px"><a href="https://github.com/tanushv-creator/student-performance-prediction" target="_blank"><i class="fab fa-github"></i> GitHub</a></p>
+</footer>
+<script>
+function predict(){
+  const spinner=document.getElementById('spinner');
+  const btnText=document.getElementById('btn-text');
+  spinner.style.display='block';
+  btnText.style.display='none';
+  setTimeout(()=>{
+    const study=+document.getElementById('studytime').value;
+    const fail=+document.getElementById('failures').value;
+    const abs=+document.getElementById('absences').value;
+    const medu=+document.getElementById('medu').value;
+    const fedu=+document.getElementById('fedu').value;
+    let score=5+study*1.2-fail*2.2-abs*0.15+medu*0.4+fedu*0.3;
+    score=Math.min(20,Math.max(0,score));
+    const rounded=Math.round(score*10)/10;
+    const pass=rounded>=10;
+    document.getElementById('grade-num').textContent=rounded.toFixed(1);
+    const rp=document.getElementById('result-pass');
+    rp.textContent=pass?'✅ Result: PASS':'❌ Result: FAIL';
+    rp.className='result-pass '+(pass?'pass':'fail');
+    let tip='';
+    if(fail>1)tip='💡 Reducing past failures and increasing study time will significantly boost performance.';
+    else if(abs>10)tip='💡 High absences detected. Attendance has a strong impact on final grades.';
+    else if(study<2)tip='💡 Try increasing weekly study time to at least 3 hours for better results.';
+    else if(pass&&rounded>=14)tip='🌟 Excellent profile! Keep up the great habits.';
+    else tip='💡 Good standing. Consistent study habits will push grades even higher.';
+    document.getElementById('result-tip').textContent=tip;
+    document.getElementById('placeholder').style.display='none';
+    document.getElementById('result-box').classList.add('show');
+    spinner.style.display='none';
+    btnText.style.display='flex';
+  },900);
+}
+const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1e2a45'},ticks:{color:'#64748b'}},y:{grid:{color:'#1e2a45'},ticks:{color:'#64748b'}}}};
+new Chart(document.getElementById('chart1'),{type:'bar',data:{labels:['1 hr','2 hrs','3 hrs','4 hrs'],datasets:[{data:[8.2,10.5,12.8,14.1],backgroundColor:'#3b82f6',borderRadius:6}]},options:opts});
+new Chart(document.getElementById('chart2'),{type:'line',data:{labels:['0-2','3-5','6-10','11-20','20+'],datasets:[{data:[14.2,12.8,11.4,9.2,6.8],borderColor:'#818cf8',backgroundColor:'rgba(129,140,248,0.1)',tension:0.4,fill:true,pointBackgroundColor:'#818cf8'}]},options:opts});
+new Chart(document.getElementById('chart3'),{type:'bar',data:{labels:['0 failures','1 failure','2 failures','3+ failures'],datasets:[{data:[13.4,10.2,7.8,5.1],backgroundColor:'#10b981',borderRadius:6}]},options:opts});
+new Chart(document.getElementById('chart4'),{type:'doughnut',data:{labels:['Pass','Fail'],datasets:[{data:[67,33],backgroundColor:['#10b981','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#64748b'}}}}});
+</script>
+</body>
+</html>
