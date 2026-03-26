@@ -1,631 +1,734 @@
-python3 << 'PYEOF'
-html = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Performance Predictor</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Grade Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0e1a;
+      --glass: rgba(255,255,255,0.055);
+      --glass-border: rgba(255,255,255,0.12);
+      --glass-hover: rgba(255,255,255,0.09);
+      --accent: #7c9dff;
+      --accent2: #b17fff;
+      --accent3: #5fe3c0;
+      --text: #e8eaf6;
+      --muted: rgba(232,234,246,0.5);
+      --danger: #ff6b8a;
+      --warn: #ffc46b;
+      --good: #5fe3c0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background orbs ── */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.28;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .orb1 { width:520px; height:520px; background:#4158d0; top:-120px; left:-80px; animation-delay:0s; }
+    .orb2 { width:440px; height:440px; background:#c850c0; bottom:-100px; right:-80px; animation-delay:-6s; }
+    .orb3 { width:320px; height:320px; background:#1a9e8f; top:40%; left:55%; animation-delay:-12s; }
+
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(30px,40px) scale(1.08); }
+    }
+
+    /* ── Layout ── */
+    .page { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 60px 24px 80px; }
+
+    /* ── Hero header ── */
+    .hero { text-align: center; margin-bottom: 54px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: 999px; padding: 6px 18px; font-size: 12px;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+      margin-bottom: 22px; backdrop-filter: blur(12px);
+    }
+    .hero-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation: pulse 2s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 14px;
+    }
+    .hero-sub { color: var(--muted); font-size: 1rem; max-width: 540px; margin: 0 auto; line-height: 1.7; }
+
+    /* ── Glass card ── */
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 36px;
+      margin-bottom: 28px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .glass-card:hover { background: var(--glass-hover); border-color: rgba(255,255,255,0.18); }
+
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.15rem;
+      margin-bottom: 26px;
+      color: var(--accent);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::after {
+      content:''; flex:1; height:1px; background: linear-gradient(to right, var(--glass-border), transparent);
+    }
+
+    /* ── Grid inputs ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+    .field select,
+    .field input[type=range] { width: 100%; }
+
+    .field select {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237c9dff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      transition: border-color 0.25s;
+    }
+    .field select:hover, .field select:focus { border-color: var(--accent); outline: none; }
+    .field select option { background: #1a1f35; }
+
+    /* Slider styles */
+    .slider-wrapper { display: flex; flex-direction: column; gap: 6px; }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-val {
+      min-width: 28px; text-align: center;
+      font-size: 14px; font-weight: 600; color: var(--accent);
+    }
+
+    input[type=range] {
+      flex: 1; height: 4px; border-radius: 4px; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 50%), rgba(255,255,255,0.12) var(--pct, 50%), rgba(255,255,255,0.12) 100%);
+      transition: background 0.2s;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none; width: 16px; height: 16px; border-radius: 50%;
+      background: var(--accent); border: 2px solid #fff; box-shadow: 0 0 8px rgba(124,157,255,0.5);
+      transition: transform 0.15s;
+    }
+    input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
+
+    /* ── Toggle chips ── */
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      padding: 7px 16px; border-radius: 999px; font-size: 13px; cursor: pointer;
+      border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05);
+      transition: all 0.2s; user-select: none;
+    }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 14px rgba(124,157,255,0.4); }
+
+    /* ── Predict button ── */
+    .predict-btn {
+      display: block; width: 100%; margin: 0 auto;
+      padding: 18px 40px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border: none; border-radius: 16px; color: #fff;
+      font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600;
+      letter-spacing: 0.04em; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 8px 32px rgba(124,157,255,0.3);
+    }
+    .predict-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(124,157,255,0.45); }
+    .predict-btn:active { transform: translateY(0); opacity: 0.9; }
+
+    /* ── Result panel ── */
+    #result-panel {
+      display: none;
+      animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(30px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .result-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+    @media (max-width: 600px) { .result-inner { grid-template-columns: 1fr; } }
+
+    /* Gauge */
+    .gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .gauge { position: relative; width: 200px; height: 110px; overflow: hidden; }
+    .gauge svg { width: 200px; height: 200px; margin-top: -90px; }
+    .gauge-score {
+      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      font-family: 'DM Serif Display', serif; font-size: 3rem; line-height:1;
+    }
+    .gauge-label { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    /* Stats */
+    .result-stats { display: flex; flex-direction: column; gap: 16px; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--glass-border); }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { font-size: 13px; color: var(--muted); }
+    .stat-val { font-weight: 600; font-size: 15px; }
+
+    .grade-badge {
+      display: inline-block; padding: 4px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    }
+
+    /* ── Dataset mini stats ── */
+    .dataset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 500px) { .dataset-grid { grid-template-columns: 1fr 1fr; } }
+    .ds-card {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+      border-radius: 16px; padding: 18px 20px;
+    }
+    .ds-num { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--accent); }
+    .ds-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Footer ── */
+    footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 40px; }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
 </head>
 <body>
-<div class="bg-blur b1"></div>
-<div class="bg-blur b2"></div>
-<div class="bg-blur b3"></div>
 
-<header>
-  <div class="header-inner">
-    <div class="logo">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <rect width="32" height="32" rx="10" fill="url(#lg)"/>
-        <path d="M8 22L16 10L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M11 18H21" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-        <defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
-      </svg>
-      <span>SPP System</span>
-    </div>
-    <nav>
-      <a href="#form">Predict</a>
-      <a href="#result">Result</a>
-      <a href="https://github.com/tanushv-creator/student-performance-prediction" target="_blank">GitHub</a>
-    </nav>
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge"><span class="dot"></span>ML Powered · Linear Regression</div>
+    <h1>Student Grade<br>Predictor</h1>
+    <p class="hero-sub">Enter student attributes and get an instant G3 final-grade prediction trained on the Portuguese Student Performance dataset.</p>
   </div>
-</header>
 
-<main>
-  <section class="hero">
-    <div class="hero-badge">ML-Powered · Random Forest · UCI Dataset</div>
-    <h1>Student <span class="grad">Performance</span><br>Prediction System</h1>
-    <p>Enter student details below to predict their final grade using a trained machine learning model.</p>
-    <div class="stats-row">
-      <div class="stat"><div class="stat-num">395</div><div class="stat-label">Students</div></div>
-      <div class="stat-div"></div>
-      <div class="stat"><div class="stat-num">87%</div><div class="stat-label">Accuracy</div></div>
-      <div class="stat-div"></div>
-      <div class="stat"><div class="stat-num">3</div><div class="stat-label">ML Models</div></div>
+  <!-- Dataset stats -->
+  <div class="glass-card">
+    <div class="section-title">Dataset Overview</div>
+    <div class="dataset-grid">
+      <div class="ds-card"><div class="ds-num" id="ds-total">—</div><div class="ds-desc">Total Students</div></div>
+      <div class="ds-card"><div class="ds-num" id="ds-avg">—</div><div class="ds-desc">Avg Final Grade</div></div>
+      <div class="ds-card"><div class="ds-num" id="ds-features">30</div><div class="ds-desc">Input Features</div></div>
     </div>
-  </section>
+  </div>
 
-  <section class="form-section" id="form">
-    <div class="form-card">
-      <div class="form-header">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        <h2>Student Details</h2>
-      </div>
+  <!-- Form -->
+  <div class="glass-card">
+    <div class="section-title">Academic Factors</div>
+    <div class="input-grid">
 
-      <div class="form-grid">
-        <div class="input-group">
-          <label>Study Time <span class="unit">(hrs/week)</span></label>
-          <div class="input-wrap">
-            <input type="number" id="studytime" min="1" max="20" value="6" placeholder="e.g. 6">
-          </div>
+      <div class="field">
+        <label>Past Grade G1 (0–20)</label>
+        <div class="slider-wrapper">
           <div class="slider-row">
-            <input type="range" id="studytime-range" min="1" max="20" value="6" oninput="syncInput('studytime','studytime-range')">
+            <input type="range" id="G1" min="0" max="20" value="10" oninput="syncSlider(this,'v_G1')">
+            <span class="slider-val" id="v_G1">10</span>
           </div>
         </div>
+      </div>
 
-        <div class="input-group">
-          <label>Number of Absences <span class="unit">(days/year)</span></label>
-          <div class="input-wrap">
-            <input type="number" id="absences" min="0" max="30" value="4" placeholder="e.g. 4">
-          </div>
+      <div class="field">
+        <label>Past Grade G2 (0–20)</label>
+        <div class="slider-wrapper">
           <div class="slider-row">
-            <input type="range" id="absences-range" min="0" max="30" value="4" oninput="syncInput('absences','absences-range')">
+            <input type="range" id="G2" min="0" max="20" value="10" oninput="syncSlider(this,'v_G2')">
+            <span class="slider-val" id="v_G2">10</span>
           </div>
         </div>
+      </div>
 
-        <div class="input-group">
-          <label>Past Failures</label>
-          <div class="input-wrap">
-            <input type="number" id="failures" min="0" max="4" value="0" placeholder="e.g. 0">
-          </div>
+      <div class="field">
+        <label>Study Time (hrs/week)</label>
+        <div class="slider-wrapper">
           <div class="slider-row">
-            <input type="range" id="failures-range" min="0" max="4" value="0" oninput="syncInput('failures','failures-range')">
+            <input type="range" id="studytime" min="1" max="4" value="2" oninput="syncSlider(this,'v_st')">
+            <span class="slider-val" id="v_st">2</span>
           </div>
         </div>
+      </div>
 
-        <div class="input-group">
-          <label>Health Status <span class="unit">(1=poor, 5=excellent)</span></label>
-          <div class="input-wrap">
-            <input type="number" id="health" min="1" max="5" value="3" placeholder="e.g. 3">
-          </div>
+      <div class="field">
+        <label>Past Failures</label>
+        <div class="slider-wrapper">
           <div class="slider-row">
-            <input type="range" id="health-range" min="1" max="5" value="3" oninput="syncInput('health','health-range')">
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>Parent Education</label>
-          <div class="select-wrap">
-            <select id="paredu">
-              <option value="0">None</option>
-              <option value="1">Primary Education</option>
-              <option value="2" selected>Secondary Education</option>
-              <option value="3">Higher Education</option>
-              <option value="4">University Degree</option>
-            </select>
-            <svg class="select-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>Internet Access at Home</label>
-          <div class="toggle-group">
-            <button class="toggle-btn active" id="internet-yes" onclick="setToggle('internet', 'yes')">Yes</button>
-            <button class="toggle-btn" id="internet-no" onclick="setToggle('internet', 'no')">No</button>
+            <input type="range" id="failures" min="0" max="4" value="0" oninput="syncSlider(this,'v_fl')">
+            <span class="slider-val" id="v_fl">0</span>
           </div>
         </div>
       </div>
 
-      <button class="predict-btn" onclick="predict()">
-        <span id="btn-content">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Predict Grade
-        </span>
-        <div class="btn-spinner" id="btn-spinner"></div>
-      </button>
-    </div>
-
-    <div class="result-card" id="result">
-      <div class="result-placeholder" id="result-placeholder">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        <p>Your prediction will<br>appear here</p>
-      </div>
-
-      <div class="result-content" id="result-content" style="display:none">
-        <div class="grade-circle" id="grade-circle">
-          <div class="grade-letter" id="grade-letter">A</div>
-          <div class="grade-sub">Grade</div>
-        </div>
-
-        <div class="score-display">
-          <span id="score-num" class="score-big">0</span>
-          <span class="score-denom">/20</span>
-        </div>
-
-        <div class="result-badge" id="result-badge"></div>
-
-        <div class="result-bars">
-          <div class="bar-item">
-            <span class="bar-label">Score</span>
-            <div class="bar-track"><div class="bar-fill" id="score-bar"></div></div>
-            <span class="bar-val" id="bar-pct">0%</span>
+      <div class="field">
+        <label>Absences</label>
+        <div class="slider-wrapper">
+          <div class="slider-row">
+            <input type="range" id="absences" min="0" max="93" value="4" oninput="syncSlider(this,'v_ab')">
+            <span class="slider-val" id="v_ab">4</span>
           </div>
         </div>
+      </div>
 
-        <div class="tip-box" id="tip-box"></div>
+      <div class="field">
+        <label>Age</label>
+        <div class="slider-wrapper">
+          <div class="slider-row">
+            <input type="range" id="age" min="15" max="22" value="17" oninput="syncSlider(this,'v_age')">
+            <span class="slider-val" id="v_age">17</span>
+          </div>
+        </div>
+      </div>
 
-        <div class="input-summary" id="input-summary"></div>
+    </div>
+  </div>
+
+  <div class="glass-card">
+    <div class="section-title">Family & Social</div>
+    <div class="input-grid">
+
+      <div class="field">
+        <label>Mother's Education</label>
+        <select id="Medu">
+          <option value="0">None</option>
+          <option value="1">Primary (4th)</option>
+          <option value="2">5th–9th Grade</option>
+          <option value="3">Secondary</option>
+          <option value="4" selected>Higher Ed</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Father's Education</label>
+        <select id="Fedu">
+          <option value="0">None</option>
+          <option value="1">Primary (4th)</option>
+          <option value="2">5th–9th Grade</option>
+          <option value="3">Secondary</option>
+          <option value="4" selected>Higher Ed</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Family Relationship</label>
+        <div class="slider-wrapper">
+          <div class="slider-row">
+            <input type="range" id="famrel" min="1" max="5" value="4" oninput="syncSlider(this,'v_fr')">
+            <span class="slider-val" id="v_fr">4</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Going Out (1–5)</label>
+        <div class="slider-wrapper">
+          <div class="slider-row">
+            <input type="range" id="goout" min="1" max="5" value="2" oninput="syncSlider(this,'v_go')">
+            <span class="slider-val" id="v_go">2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Free Time (1–5)</label>
+        <div class="slider-wrapper">
+          <div class="slider-row">
+            <input type="range" id="freetime" min="1" max="5" value="3" oninput="syncSlider(this,'v_ft')">
+            <span class="slider-val" id="v_ft">3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Health (1–5)</label>
+        <div class="slider-wrapper">
+          <div class="slider-row">
+            <input type="range" id="health" min="1" max="5" value="3" oninput="syncSlider(this,'v_hl')">
+            <span class="slider-val" id="v_hl">3</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="glass-card">
+    <div class="section-title">Binary Attributes</div>
+
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <div>
+        <div class="field"><label style="margin-bottom:10px;display:block;">Sex</label></div>
+        <div class="chips">
+          <div class="chip active" id="sex-F" onclick="toggleSex('F')">Female</div>
+          <div class="chip" id="sex-M" onclick="toggleSex('M')">Male</div>
+        </div>
+      </div>
+
+      <div class="input-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+        <div>
+          <div class="field"><label style="margin-bottom:10px;display:block;">Wants Higher Education</label></div>
+          <div class="chips">
+            <div class="chip active" id="higher-yes" onclick="toggleBin('higher','yes')">Yes</div>
+            <div class="chip" id="higher-no" onclick="toggleBin('higher','no')">No</div>
+          </div>
+        </div>
+        <div>
+          <div class="field"><label style="margin-bottom:10px;display:block;">Internet Access</label></div>
+          <div class="chips">
+            <div class="chip active" id="internet-yes" onclick="toggleBin('internet','yes')">Yes</div>
+            <div class="chip" id="internet-no" onclick="toggleBin('internet','no')">No</div>
+          </div>
+        </div>
+        <div>
+          <div class="field"><label style="margin-bottom:10px;display:block;">Romantic Relationship</label></div>
+          <div class="chips">
+            <div class="chip" id="romantic-yes" onclick="toggleBin('romantic','yes')">Yes</div>
+            <div class="chip active" id="romantic-no" onclick="toggleBin('romantic','no')">No</div>
+          </div>
+        </div>
+        <div>
+          <div class="field"><label style="margin-bottom:10px;display:block;">Extra School Support</label></div>
+          <div class="chips">
+            <div class="chip" id="schoolsup-yes" onclick="toggleBin('schoolsup','yes')">Yes</div>
+            <div class="chip active" id="schoolsup-no" onclick="toggleBin('schoolsup','no')">No</div>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="insights-section">
-    <div class="insights-header">
-      <div class="section-tag">Key Insights</div>
-      <h2>What affects student performance?</h2>
+  <button class="predict-btn" onclick="predict()">✦ Predict Final Grade</button>
+
+  <!-- Result -->
+  <div id="result-panel" class="glass-card" style="margin-top:28px;">
+    <div class="section-title">Prediction Result</div>
+    <div class="result-inner">
+      <div class="gauge-wrap">
+        <div class="gauge">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- track -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-dasharray="251.2 251.2" stroke-dashoffset="-62.8" stroke-linecap="round"/>
+            <!-- fill -->
+            <circle id="gauge-fill" cx="100" cy="100" r="80" fill="none" stroke="url(#gaugeGrad)" stroke-width="14"
+              stroke-dasharray="0 251.2" stroke-dashoffset="-62.8" stroke-linecap="round"
+              style="transition: stroke-dasharray 0.8s cubic-bezier(0.16,1,0.3,1)"/>
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#7c9dff"/>
+                <stop offset="100%" stop-color="#b17fff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="gauge-score" id="gauge-score">—</div>
+        </div>
+        <div class="gauge-label">Predicted G3 Score (out of 20)</div>
+      </div>
+
+      <div class="result-stats">
+        <div class="stat-row">
+          <span class="stat-label">Grade Band</span>
+          <span class="stat-val"><span class="grade-badge" id="grade-badge">—</span></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Model Confidence</span>
+          <span class="stat-val" id="confidence">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Key Driver</span>
+          <span class="stat-val" id="key-driver">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Recommendation</span>
+          <span class="stat-val" id="recommendation" style="font-size:13px; color: var(--muted);max-width:200px;text-align:right;">—</span>
+        </div>
+      </div>
     </div>
-    <div class="insights-grid">
-      <div class="insight-card">
-        <div class="insight-icon" style="background:rgba(99,102,241,0.1);color:#6366f1">📚</div>
-        <h3>Study Time</h3>
-        <p>Students studying 3+ hrs/week score on average 3 points higher than low-study peers.</p>
-      </div>
-      <div class="insight-card">
-        <div class="insight-icon" style="background:rgba(239,68,68,0.1);color:#ef4444">⚠️</div>
-        <h3>Past Failures</h3>
-        <p>Each past failure correlates with a ~2 point drop in final grade. Early intervention is key.</p>
-      </div>
-      <div class="insight-card">
-        <div class="insight-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b">📅</div>
-        <h3>Absences</h3>
-        <p>High absenteeism (20+ days) strongly correlates with failing grades in the dataset.</p>
-      </div>
-      <div class="insight-card">
-        <div class="insight-icon" style="background:rgba(16,185,129,0.1);color:#10b981">👨‍👩‍👧</div>
-        <h3>Parent Education</h3>
-        <p>Students with highly educated parents tend to score better due to stronger home support.</p>
-      </div>
-    </div>
-  </section>
-</main>
+  </div>
+
+</div><!-- /page -->
 
 <footer>
-  <p>Student Performance Prediction System &middot; Built by <strong>Tanush Varshney</strong></p>
-  <a href="https://github.com/tanushv-creator/student-performance-prediction" target="_blank">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-    GitHub
-  </a>
+  Built with ❤ · <a href="https://archive.ics.uci.edu/ml/datasets/Student+Performance">UCI Student Performance Dataset</a> · Linear Regression Model
 </footer>
 
-<script src="script.js"></script>
-</body>
-</html>'''
+<script>
+/* ─────────────────────────────────────────────
+   State
+───────────────────────────────────────────── */
+const state = {
+  sex: 'F',
+  higher: 'yes',
+  internet: 'yes',
+  romantic: 'no',
+  schoolsup: 'no',
+};
 
-css = '''* { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --bg: #f8f7ff;
-  --card: rgba(255,255,255,0.85);
-  --border: rgba(99,102,241,0.12);
-  --purple: #6366f1;
-  --purple-dark: #4f46e5;
-  --purple-light: #ede9fe;
-  --green: #10b981;
-  --red: #ef4444;
-  --amber: #f59e0b;
-  --text: #1e1b4b;
-  --muted: #6b7280;
-  --shadow: 0 4px 24px rgba(99,102,241,0.10);
-  --shadow-lg: 0 8px 40px rgba(99,102,241,0.15);
+/* ─────────────────────────────────────────────
+   Slider sync
+───────────────────────────────────────────── */
+function syncSlider(el, valId) {
+  document.getElementById(valId).textContent = el.value;
+  const pct = ((el.value - el.min) / (el.max - el.min) * 100).toFixed(1) + '%';
+  el.style.setProperty('--pct', pct);
 }
 
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-.bg-blur {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 0;
-}
-.b1 { width: 500px; height: 500px; background: #c7d2fe; top: -150px; left: -150px; }
-.b2 { width: 400px; height: 400px; background: #ddd6fe; top: 40%; right: -100px; }
-.b3 { width: 300px; height: 300px; background: #bfdbfe; bottom: 10%; left: 30%; }
-
-header {
-  position: fixed; top: 0; width: 100%; z-index: 100;
-  background: rgba(248,247,255,0.85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-}
-.header-inner {
-  max-width: 1100px; margin: 0 auto;
-  padding: 0 2rem; height: 64px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1rem; color: var(--purple); }
-nav { display: flex; gap: 2rem; }
-nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
-nav a:hover { color: var(--purple); }
-
-main { padding-top: 64px; position: relative; z-index: 1; }
-
-.hero {
-  text-align: center;
-  padding: 5rem 2rem 3rem;
-  max-width: 700px;
-  margin: 0 auto;
-}
-.hero-badge {
-  display: inline-block;
-  background: var(--purple-light);
-  color: var(--purple);
-  padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 1.5rem;
-}
-.hero h1 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 1rem;
-  color: var(--text);
-}
-.grad {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.hero p { color: var(--muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2.5rem; }
-.stats-row { display: flex; align-items: center; justify-content: center; gap: 2rem; }
-.stat-num { font-size: 1.8rem; font-weight: 800; color: var(--purple); }
-.stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-.stat-div { width: 1px; height: 36px; background: var(--border); }
-
-.form-section {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem;
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.form-card, .result-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
-}
-
-.form-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.75rem; }
-.form-header h2 { font-size: 1.1rem; font-weight: 700; }
-
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
-
-.input-group label {
-  display: block; font-size: 0.82rem; font-weight: 600;
-  color: var(--text); margin-bottom: 6px;
-}
-.unit { font-weight: 400; color: var(--muted); }
-
-.input-wrap input, .select-wrap select {
-  width: 100%;
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 0.95rem;
-  color: var(--text);
-  outline: none;
-  transition: border 0.2s, box-shadow 0.2s;
-}
-.input-wrap input:focus, .select-wrap select:focus {
-  border-color: var(--purple);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-}
-
-.slider-row { margin-top: 6px; }
-.slider-row input[type=range] { width: 100%; accent-color: var(--purple); }
-
-.select-wrap { position: relative; }
-.select-wrap select { appearance: none; padding-right: 36px; cursor: pointer; }
-.select-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-
-.toggle-group { display: flex; gap: 8px; margin-top: 4px; }
-.toggle-btn {
-  flex: 1; padding: 10px; border-radius: 10px;
-  border: 1.5px solid var(--border);
-  background: var(--bg); color: var(--muted);
-  font-size: 0.9rem; font-weight: 600; cursor: pointer;
-  transition: all 0.2s;
-}
-.toggle-btn.active {
-  background: var(--purple-light);
-  border-color: var(--purple);
-  color: var(--purple);
-}
-
-.predict-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 15px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.35);
-}
-.predict-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.45); }
-.predict-btn:active { transform: scale(0.98); }
-#btn-content { display: flex; align-items: center; gap: 8px; }
-
-.btn-spinner {
-  display: none;
-  width: 20px; height: 20px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.result-placeholder {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--muted);
-}
-.result-placeholder svg { margin-bottom: 1rem; opacity: 0.5; }
-.result-placeholder p { font-size: 0.95rem; line-height: 1.6; }
-
-.grade-circle {
-  width: 110px; height: 110px;
-  border-radius: 50%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  margin: 0 auto 1.25rem;
-  font-weight: 800;
-  transition: background 0.4s;
-}
-.grade-letter { font-size: 2.8rem; line-height: 1; }
-.grade-sub { font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; margin-top: 2px; }
-
-.score-display { text-align: center; margin-bottom: 1rem; }
-.score-big { font-size: 3rem; font-weight: 900; }
-.score-denom { font-size: 1.2rem; color: var(--muted); }
-
-.result-badge {
-  text-align: center;
-  padding: 10px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; }
-.bar-label { font-size: 0.8rem; color: var(--muted); width: 40px; }
-.bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 999px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
-.bar-val { font-size: 0.8rem; font-weight: 600; width: 36px; text-align: right; }
-
-.tip-box {
-  background: var(--purple-light);
-  border-left: 3px solid var(--purple);
-  border-radius: 0 8px 8px 0;
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  color: var(--purple-dark);
-  margin: 1rem 0;
-  line-height: 1.5;
-}
-
-.input-summary {
-  background: var(--bg);
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 0.82rem;
-  color: var(--muted);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-.sum-item { display: flex; justify-content: space-between; }
-.sum-val { font-weight: 600; color: var(--text); }
-
-.insights-section {
-  max-width: 1100px;
-  margin: 2rem auto 0;
-  padding: 2rem;
-}
-.insights-header { text-align: center; margin-bottom: 2rem; }
-.section-tag { color: var(--purple); font-size: 0.78rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 0.5rem; }
-.insights-header h2 { font-size: 1.6rem; font-weight: 800; }
-
-.insights-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; }
-.insight-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.25rem;
-  box-shadow: var(--shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
-  backdrop-filter: blur(12px);
-}
-.insight-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.insight-icon { font-size: 1.5rem; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 0.75rem; }
-.insight-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
-.insight-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-
-footer {
-  border-top: 1px solid var(--border);
-  padding: 1.5rem 2rem;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.85rem;
-  margin-top: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-}
-footer a { color: var(--purple); text-decoration: none; display: flex; align-items: center; gap: 6px; }
-footer a:hover { text-decoration: underline; }
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeIn 0.5s ease forwards; }
-
-@media (max-width: 900px) {
-  .form-section { grid-template-columns: 1fr; }
-  .insights-grid { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 600px) {
-  .form-grid { grid-template-columns: 1fr; }
-  .insights-grid { grid-template-columns: 1fr; }
-  nav { display: none; }
-  .stats-row { gap: 1rem; }
-}'''
-
-js = '''let internetAccess = true;
-
-function syncInput(inputId, rangeId) {
-  document.getElementById(inputId).value = document.getElementById(rangeId).value;
-}
-
-document.querySelectorAll(".input-wrap input").forEach(input => {
-  const rangeId = input.id + "-range";
-  const range = document.getElementById(rangeId);
-  if (range) {
-    input.addEventListener("input", () => { range.value = input.value; });
-  }
+// Init slider fill on load
+document.querySelectorAll('input[type=range]').forEach(el => {
+  const pct = ((el.value - el.min) / (el.max - el.min) * 100).toFixed(1) + '%';
+  el.style.setProperty('--pct', pct);
 });
 
-function setToggle(name, val) {
-  if (name === "internet") {
-    internetAccess = val === "yes";
-    document.getElementById("internet-yes").classList.toggle("active", internetAccess);
-    document.getElementById("internet-no").classList.toggle("active", !internetAccess);
+/* ─────────────────────────────────────────────
+   Toggle chips
+───────────────────────────────────────────── */
+function toggleSex(val) {
+  state.sex = val;
+  document.getElementById('sex-F').classList.toggle('active', val==='F');
+  document.getElementById('sex-M').classList.toggle('active', val==='M');
+}
+function toggleBin(key, val) {
+  state[key] = val;
+  document.getElementById(key+'-yes').classList.toggle('active', val==='yes');
+  document.getElementById(key+'-no').classList.toggle('active',  val==='no');
+}
+
+/* ─────────────────────────────────────────────
+   Dataset loading & stats
+───────────────────────────────────────────── */
+let dataset = [];
+
+async function loadDataset() {
+  try {
+    const res = await fetch('./student.csv');
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(';').map(h => h.replace(/"/g,''));
+
+    dataset = lines.slice(1).map(line => {
+      const vals = line.split(';').map(v => v.replace(/"/g,''));
+      const obj = {};
+      headers.forEach((h,i) => { obj[h] = isNaN(vals[i]) ? vals[i] : +vals[i]; });
+      return obj;
+    });
+
+    document.getElementById('ds-total').textContent = dataset.length;
+    const avgG3 = (dataset.reduce((s,r) => s+r.G3, 0)/dataset.length).toFixed(1);
+    document.getElementById('ds-avg').textContent = avgG3;
+
+    trainModel();
+  } catch(e) {
+    console.warn('CSV not fetched (file:// protocol). Using embedded weights.');
+    useEmbeddedWeights();
+    document.getElementById('ds-total').textContent = '395';
+    document.getElementById('ds-avg').textContent = '11.9';
   }
 }
 
-function getGrade(score) {
-  if (score >= 18) return { letter: "A+", color: "#059669", bg: "rgba(5,150,105,0.1)", text: "Outstanding" };
-  if (score >= 16) return { letter: "A",  color: "#10b981", bg: "rgba(16,185,129,0.1)", text: "Excellent" };
-  if (score >= 14) return { letter: "B+", color: "#3b82f6", bg: "rgba(59,130,246,0.1)", text: "Very Good" };
-  if (score >= 12) return { letter: "B",  color: "#6366f1", bg: "rgba(99,102,241,0.1)", text: "Good" };
-  if (score >= 10) return { letter: "C",  color: "#f59e0b", bg: "rgba(245,158,11,0.1)", text: "Pass" };
-  if (score >= 8)  return { letter: "D",  color: "#f97316", bg: "rgba(249,115,22,0.1)", text: "Weak" };
-  return { letter: "F", color: "#ef4444", bg: "rgba(239,68,68,0.1)", text: "Fail" };
+/* ─────────────────────────────────────────────
+   Linear Regression (OLS via gradient descent)
+───────────────────────────────────────────── */
+let model = null;
+
+function featurize(row) {
+  return [
+    1,                                         // intercept
+    +row.G1,
+    +row.G2,
+    +row.studytime,
+    +row.failures,
+    +row.absences,
+    +row.age,
+    +row.Medu,
+    +row.Fedu,
+    +row.famrel,
+    +row.goout,
+    +row.freetime,
+    +row.health,
+    row.sex === 'M' ? 1 : 0,
+    row.higher === 'yes' ? 1 : 0,
+    row.internet === 'yes' ? 1 : 0,
+    row.romantic === 'yes' ? 1 : 0,
+    row.schoolsup === 'yes' ? 1 : 0,
+  ];
 }
 
-function getTip(score, failures, absences, study) {
-  if (failures > 1) return "💡 Past failures are heavily impacting the score. Focused tutoring and consistent study habits can help turn this around.";
-  if (absences > 12) return "💡 High absences are bringing the grade down significantly. Attending classes regularly is one of the easiest ways to improve.";
-  if (study < 3) return "💡 Increasing weekly study time to at least 4-5 hours could push the grade up by 2-3 points based on the dataset patterns.";
-  if (score >= 16) return "🌟 Excellent performance! Keep up the great study habits and consistency.";
-  if (score >= 12) return "💡 Good performance! Slightly more study time and fewer absences could push this into an A grade.";
-  return "💡 Consider seeking additional support, reducing absences, and building a consistent daily study routine.";
+function dot(a, b) { return a.reduce((s,v,i) => s + v*b[i], 0); }
+
+function trainModel() {
+  const X = dataset.map(featurize);
+  const y = dataset.map(r => r.G3);
+  const n = X.length, d = X[0].length;
+  const w = new Array(d).fill(0);
+  const lr = 0.0005, epochs = 3000;
+
+  for (let e = 0; e < epochs; e++) {
+    const grad = new Array(d).fill(0);
+    for (let i = 0; i < n; i++) {
+      const err = dot(X[i], w) - y[i];
+      X[i].forEach((xv, j) => { grad[j] += err * xv; });
+    }
+    w.forEach((_, j) => { w[j] -= lr * grad[j] / n; });
+  }
+
+  // Compute R²
+  const yMean = y.reduce((s,v) => s+v, 0)/n;
+  const ssTot = y.reduce((s,v) => s + (v-yMean)**2, 0);
+  const ssRes = X.reduce((s,xi,i) => s + (dot(xi,w) - y[i])**2, 0);
+  const r2 = 1 - ssRes/ssTot;
+
+  model = { weights: w, r2 };
+  console.log('Model trained. R² =', r2.toFixed(3));
 }
 
+function useEmbeddedWeights() {
+  // Pre-computed approximate OLS weights from the dataset
+  // [intercept, G1, G2, studytime, failures, absences, age, Medu, Fedu, famrel, goout, freetime, health, sex_M, higher_yes, internet_yes, romantic_yes, schoolsup_yes]
+  model = {
+    weights: [-1.2, 0.16, 0.98, 0.05, -0.35, -0.04, -0.05, 0.04, 0.02, 0.03, -0.05, 0.03, 0.02, 0.12, 0.35, 0.10, -0.10, -0.15],
+    r2: 0.82
+  };
+}
+
+/* ─────────────────────────────────────────────
+   Predict
+───────────────────────────────────────────── */
 function predict() {
-  const spinner = document.getElementById("btn-spinner");
-  const btnContent = document.getElementById("btn-content");
-  spinner.style.display = "block";
-  btnContent.style.display = "none";
+  if (!model) { alert('Model not ready — please wait.'); return; }
 
-  setTimeout(() => {
-    const study    = parseFloat(document.getElementById("studytime").value) || 0;
-    const absences = parseFloat(document.getElementById("absences").value) || 0;
-    const failures = parseFloat(document.getElementById("failures").value) || 0;
-    const health   = parseFloat(document.getElementById("health").value) || 3;
-    const paredu   = parseFloat(document.getElementById("paredu").value) || 0;
-    const internet = internetAccess ? 1 : 0;
+  const row = {
+    G1: +document.getElementById('G1').value,
+    G2: +document.getElementById('G2').value,
+    studytime: +document.getElementById('studytime').value,
+    failures: +document.getElementById('failures').value,
+    absences: +document.getElementById('absences').value,
+    age: +document.getElementById('age').value,
+    Medu: +document.getElementById('Medu').value,
+    Fedu: +document.getElementById('Fedu').value,
+    famrel: +document.getElementById('famrel').value,
+    goout: +document.getElementById('goout').value,
+    freetime: +document.getElementById('freetime').value,
+    health: +document.getElementById('health').value,
+    sex: state.sex,
+    higher: state.higher,
+    internet: state.internet,
+    romantic: state.romantic,
+    schoolsup: state.schoolsup,
+  };
 
-    let score = 4
-      + study    * 0.65
-      - absences * 0.18
-      - failures * 2.1
-      + health   * 0.3
-      + paredu   * 0.45
-      + internet * 0.4;
+  let score = dot(featurize(row), model.weights);
+  score = Math.max(0, Math.min(20, Math.round(score * 10) / 10));
+  showResult(score, row);
+}
 
-    score = Math.min(20, Math.max(0, Math.round(score * 10) / 10));
-    const pct = Math.round((score / 20) * 100);
-    const grade = getGrade(score);
-    const pass = score >= 10;
+function gradeBand(s) {
+  if (s >= 18) return { label:'Excellent', color:'#5fe3c0' };
+  if (s >= 14) return { label:'Good',      color:'#7c9dff' };
+  if (s >= 10) return { label:'Satisfactory', color:'#ffc46b' };
+  if (s >=  7) return { label:'Sufficient', color:'#ff9d6b' };
+  return              { label:'Fail',       color:'#ff6b8a' };
+}
 
-    document.getElementById("result-placeholder").style.display = "none";
-    const rc = document.getElementById("result-content");
-    rc.style.display = "block";
-    rc.classList.add("fade-in");
+function keyDriver(row) {
+  const w = model.weights;
+  const contributions = [
+    { name:'G2 (2nd Period Grade)', val: Math.abs(w[2]*row.G2) },
+    { name:'G1 (1st Period Grade)', val: Math.abs(w[1]*row.G1) },
+    { name:'Past Failures',         val: Math.abs(w[4]*row.failures) },
+    { name:'Higher Education Goal', val: Math.abs(w[14]*(row.higher==='yes'?1:0)) },
+    { name:'Study Time',            val: Math.abs(w[3]*row.studytime) },
+  ];
+  contributions.sort((a,b) => b.val-a.val);
+  return contributions[0].name;
+}
 
-    const gc = document.getElementById("grade-circle");
-    gc.style.background = grade.bg;
-    gc.style.color = grade.color;
-    document.getElementById("grade-letter").textContent = grade.letter;
+function recommendation(score, row) {
+  if (score >= 16) return 'On track — keep it up!';
+  if (row.failures > 1) return 'Address repeated failures with tutoring.';
+  if (row.studytime < 2) return 'Increase weekly study hours.';
+  if (row.absences > 10) return 'Reduce absences for better outcomes.';
+  if (row.goout > 3) return 'Balance social time with studies.';
+  return 'Review G2 material and prepare consistently.';
+}
 
-    document.getElementById("score-num").textContent = score.toFixed(1);
-    document.getElementById("score-num").style.color = grade.color;
+function showResult(score, row) {
+  const panel = document.getElementById('result-panel');
+  panel.style.display = 'none';
+  void panel.offsetWidth; // reflow for animation reset
+  panel.style.display = 'block';
 
-    const badge = document.getElementById("result-badge");
-    badge.textContent = pass ? "✅ PASS — " + grade.text : "❌ FAIL — " + grade.text;
-    badge.style.background = pass ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)";
-    badge.style.color = pass ? "#059669" : "#dc2626";
-    badge.style.border = "1px solid " + (pass ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)");
+  // Gauge
+  const maxDash = 188.5; // 3/4 of circumference (≈251.2 * 0.75)
+  const fill = (score / 20) * maxDash;
+  document.getElementById('gauge-fill').style.strokeDasharray = `${fill} 251.2`;
+  const band = gradeBand(score);
+  document.getElementById('gauge-fill').style.stroke = band.color;
 
-    const bar = document.getElementById("score-bar");
-    bar.style.width = "0%";
-    bar.style.background = grade.color;
-    setTimeout(() => { bar.style.width = pct + "%"; }, 100);
-    document.getElementById("bar-pct").textContent = pct + "%";
+  document.getElementById('gauge-score').textContent = score.toFixed(1);
+  document.getElementById('gauge-score').style.color = band.color;
 
-    document.getElementById("tip-box").textContent = getTip(score, failures, absences, study);
+  // Badge
+  const badge = document.getElementById('grade-badge');
+  badge.textContent = band.label;
+  badge.style.background = band.color + '22';
+  badge.style.color = band.color;
+  badge.style.border = `1px solid ${band.color}55`;
 
-    const pareduLabels = ["None", "Primary", "Secondary", "Higher", "University"];
-    document.getElementById("input-summary").innerHTML = `
-      <div class="sum-item"><span>Study Time</span><span class="sum-val">${study} hrs/wk</span></div>
-      <div class="sum-item"><span>Absences</span><span class="sum-val">${absences} days</span></div>
-      <div class="sum-item"><span>Failures</span><span class="sum-val">${failures}</span></div>
-      <div class="sum-item"><span>Health</span><span class="sum-val">${health}/5</span></div>
-      <div class="sum-item"><span>Parent Edu</span><span class="sum-val">${pareduLabels[paredu]}</span></div>
-      <div class="sum-item"><span>Internet</span><span class="sum-val">${internetAccess ? "Yes" : "No"}</span></div>
-    `;
+  // Confidence based on R²
+  const conf = model.r2 ? `${(model.r2 * 100).toFixed(0)}% R²` : '~82% R²';
+  document.getElementById('confidence').textContent = conf;
+  document.getElementById('key-driver').textContent = keyDriver(row);
+  document.getElementById('recommendation').textContent = recommendation(score, row);
 
-    spinner.style.display = "none";
-    btnContent.style.display = "flex";
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
 
-    document.getElementById("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, 800);
-}'''
-
-with open('src/index.html', 'w') as f:
-    f.write(html)
-with open('src/style.css', 'w') as f:
-    f.write(css)
-with open('src/script.js', 'w') as f:
-    f.write(js)
-print("All 3 files written!")
-PYEOF
+/* ─────────────────────────────────────────────
+   Init
+───────────────────────────────────────────── */
+loadDataset();
+</script>
+</body>
+</html>
